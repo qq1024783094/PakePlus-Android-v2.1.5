@@ -1,11 +1,960 @@
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>PakePlus</title>
-    </head>
-    <body>
-        PakePlus
-    </body>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泰和医院检验科 - 工作导航</title>
+    <style>
+        :root {
+            --primary-color: #7ba05b;
+            --primary-dark: #5d7a44;
+            --bg-color: #f2f7f0;
+            --text-main: #2c3e28;
+            --text-sub: #666;
+            --white: #ffffff;
+            --shadow: 0 4px 20px rgba(123, 160, 91, 0.15);
+            --border-radius: 8px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "PingFang SC", "Microsoft YaHei", sans-serif; }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        header { text-align: center; margin-bottom: 30px; width: 100%; max-width: 800px; }
+        h1 { font-size: 2.0rem; color: var(--primary-dark); margin-bottom: 12px; font-weight: 600; letter-spacing: 1px; }
+        .header-tools { display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap; }
+        .search-container { display: flex; align-items: center; background: white; border-radius: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; }
+        .search-container input { border: none; padding: 10px 18px; outline: none; font-size: 0.95rem; width: 280px; }
+        .search-container button { background: var(--primary-color); color: white; border: none; padding: 10px 20px; cursor: pointer; font-size: 0.95rem; transition: background 0.3s; }
+        .search-container button:hover { background: var(--primary-dark); }
+        .ask-doubao { background: var(--primary-dark); color: white; padding: 10px 24px; border-radius: 24px; text-decoration: none; font-size: 0.95rem; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .ask-doubao:hover { background: #4a6838; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1000px;
+        }
+        .card {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            padding: 30px 15px;
+            text-align: center;
+            text-decoration: none;
+            color: var(--text-main);
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .card:hover { transform: translateY(-5px); border-color: var(--primary-color); box-shadow: 0 10px 25px rgba(123, 160, 91, 0.25); }
+        .icon-box {
+            width: 55px;
+            height: 55px;
+            background-color: #eff5eb;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            transition: background-color 0.3s;
+        }
+        .card:hover .icon-box { background-color: var(--primary-color); }
+        .icon-box svg { width: 26px; height: 26px; fill: var(--primary-color); transition: fill 0.3s; }
+        .card:hover .icon-box svg { fill: var(--white); }
+        .card h2 { font-size: 1.2rem; margin-bottom: 5px; color: var(--primary-dark); }
+        .card span { font-size: 0.8rem; color: var(--text-sub); }
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none; justify-content: center; align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+        .modal-overlay.active { display: flex; animation: fadeIn 0.3s; }
+        .modal-content {
+            background: var(--white);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            width: 95%;
+            max-width: 900px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        /* 移动端弹窗优化：保留小圆角 */
+        @media (max-width: 600px) {
+            .modal-content {
+                width: 100%;
+                height: 100%;
+                border-radius: 4px; /* 保留小半径圆角 */
+            }
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .modal-title { font-size: 1.1rem; color: var(--primary-dark); font-weight: bold; }
+        .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999; }
+        .close-btn:hover { color: #333; }
+        .calc-group { margin-bottom: 20px; background: #f9fbf9; padding: 15px; border-radius: 8px; border: 1px solid #e0e8de; }
+        .calc-title { font-size: 0.95rem; font-weight: bold; margin-bottom: 10px; color: var(--text-main); display: block; border-left: 3px solid var(--primary-color); padding-left: 8px; }
+        .calc-desc { font-size: 0.8rem; color: #666; margin-bottom: 10px; line-height: 1.5; }
+        .input-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+        .input-row label { width: 90px; font-size: 0.85rem; color: #555; text-align: right; margin-right: 5px;}
+        .input-row input {
+            flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; outline: none; transition: 0.3s; font-size: 0.9rem;
+        }
+        .input-row select {
+            width: 80px;
+            padding: 6px; border: 1px solid #ccc; border-radius: 4px; outline: none; transition: 0.3s; font-size: 0.9rem;
+        }
+        .input-row input:focus, .input-row select:focus { border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(123, 160, 91, 0.2); }
+        .unit { width: 40px; font-size: 0.75rem; color: #888; }
+        .btn-calc {
+            background-color: var(--primary-color); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; width: 100%; margin-top: 5px;
+        }
+        .btn-calc:hover { background-color: var(--primary-dark); }
+        .result-box {
+            margin-top: 10px; font-size: 0.85rem; color: var(--primary-dark); font-weight: bold; text-align: left; background: #f9fbf9; padding: 8px; border-radius: 4px; border: 1px dashed #cfdcc8; white-space: pre-line;
+        }
+        /* 统一错误提示样式 */
+        .result-box.error {
+            color: #d32f2f;
+            background: #fef0f0;
+            border-color: #fcd4d4;
+            content: "❌ ";
+        }
+        .result-ref { font-size: 0.75rem; color: #888; margin-top: 5px; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        footer { margin-top: 40px; font-size: 0.8rem; color: #999; }
+        @media (max-width: 600px) { h1 { font-size: 1.6rem; } .grid-container { gap: 15px; } .header-tools { flex-direction: column; gap: 10px; } .search-container input { width: 220px; } }
+        .contact-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        .contact-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .contact-name { font-weight: 500; font-size: 1rem; }
+        .contact-phone { color: #666; font-size: 0.95rem; }
+        #countTable {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #f9fcf7;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        #countTable th,
+        #countTable td {
+            border-bottom: 1px solid #e0e0e0;
+            padding: 10px;
+            text-align: left;
+        }
+        #countTable th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+        #countTable tr:nth-child(even) {
+            background-color: #e9f5db;
+        }
+        #countTable tr:hover {
+            background-color: #d4e8c1;
+        }
+        #countTable button {
+            padding: 6px 12px;
+            margin: 0 3px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        #countTable button:hover {
+            background-color: var(--primary-dark);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+            transform: translateY(-1px);
+        }
+        #countTable td span {
+            font-size: 1rem;
+            display: inline-block;
+            text-align: center;
+            min-width: 25px;
+            margin: 0 5px;
+        }
+        .white-cell-desc {
+            font-size: 0.85rem;
+            color: #666;
+            margin: 10px 0;
+            line-height: 1.5;
+        }
+        #resetButton {
+            margin-top: 15px;
+            padding: 8px 16px;
+            background-color: var(--primary-dark);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        #resetButton:hover {
+            background-color: #4a6838;
+        }
+        /* 表头注释样式 */
+        .th-note {
+            font-size: 0.7rem;
+            font-weight: normal;
+            display: block;
+            margin-top: 2px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>泰和医院检验科</h1>
+        <div class="header-tools">
+            <div class="search-container">
+                <input type="text" placeholder="请输入搜索内容...">
+                <button onclick="searchBaidu()">百度一下</button>
+            </div>
+            <a href="https://www.doubao.com" target="_blank" class="ask-doubao">问豆包</a>
+        </div>
+    </header>
+    <main class="grid-container">
+        <a href="http://172.16.32.129/passport/#/login" target="_blank" class="card">
+            <div class="icon-box">
+                <svg viewBox="0 0 24 24"><path d="M20,6H4V4H20V6M21,19V9H3V19H21M22,19A1,1 0 0,1 21,20H3A1,1 0 0,1 2,19V9A1,1 0 0,1 3,8H21A1,1 0 0,1 22,9V19Z" /></svg>
+            </div>
+            <h2>物资库存</h2>
+            <span>库存查询 / 耗材入库</span>
+        </a>
+        <a href="http://172.16.32.178/apps/bloodbank/?#/login" target="_blank" class="card">
+            <div class="icon-box">
+                <svg viewBox="0 0 24 24"><path d="M12,2C12,2 5,11.29 5,16.5A7,7 0 0,0 12,23.5A7,7 0 0,0 19,16.5C19,11.29 12,2 12,2M12,4.83C13.27,7.18 17,13.28 17,16.5A5,5 0 0,1 12,21.5A5,5 0 0,1 7,16.5C7,13.28 10.73,7.18 12,4.83Z" /></svg>
+            </div>
+            <h2>血库管理</h2>
+            <span>配血 / 发血 / 入库</span>
+        </a>
+        <a href="http://webhis.thyy.cn:8080/login" target="_blank" class="card">
+            <div class="icon-box">
+                <svg viewBox="0 0 24 24"><path d="M20,18C21.1,18 22,17.1 22,16V6C22,4.9 21.1,4 20,4H4C2.9,4 2,4.9 2,6V16C2,17.1 2.9,18 4,18H0V20H24V18H20M4,6H20V16H4V6Z" /></svg>
+            </div>
+            <h2>工作集成平台</h2>
+            <span>HIS系统 / 报告查询</span>
+        </a>
+        <div class="card" onclick="openModal('calc')">
+            <div class="icon-box">
+                <svg viewBox="0 0 24 24"><path d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M19,19H5V5H19V19M13,7.5H17V9H13V7.5M13,10H17V11.5H13V10M7,7.5H11.5V9H7V7.5M7,10H11.5V11.5H7V10M7,12.5H17V14H7V12.5M7,15H11.5V16.5H7V15M13,15H17V16.5H13V15Z" /></svg>
+            </div>
+            <h2>常用公式</h2>
+            <span>脂血校正/LDL/BMI/eGFR/Ccr</span>
+        </div>
+        <div class="card" onclick="openModal('contact')">
+            <div class="icon-box">
+                <svg viewBox="0 0 24 24"><path d="M19,3A2,2 0 0,1 21,5V19A2,2 0 0,1 19,21H5A2,2 0 0,1 3,19V5A2,2 0 0,1 5,3H19M16.5,12A1.5,1.5 0 0,0 15,10.5A1.5,1.5 0 0,0 16.5,9A1.5,1.5 0 0,0 18,10.5A1.5,1.5 0 0,0 16.5,12M9,11A3,3 0 0,0 12,8A3,3 0 0,0 9,5A3,3 0 0,0 6,8A3,3 0 0,0 9,11M16.5,16.25C14.67,16.25 13.25,14.83 13.25,13C13.25,11.17 14.67,9.75 16.5,9.75C18.33,9.75 19.75,11.17 19.75,13C19.75,14.83 18.33,16.25 16.5,16.25Z" /></svg>
+            </div>
+            <h2>科室通讯录</h2>
+            <span>快速查询同事联系方式</span>
+        </div>
+        <div class="card" onclick="openModal('whiteCell')">
+            <div class="icon-box">
+                <svg viewBox="0 0 24 24"><path d="M12,2C6.47,2 2,6.5 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M15.59,7L12,10.59L8.41,7L7,8.41L10.59,12L7,15.59L8.41,17L12,13.41L15.59,17L17,15.59L13.41,12L17,8.41L15.59,7Z" /></svg>
+            </div>
+            <h2>白细胞分类计数</h2>
+            <span>手动计数与百分比换算</span>
+        </div>
+    </main>
+    <div class="modal-overlay" id="calcModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">检验常用公式计算器</span>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            <div class="calc-group">
+                <span class="calc-title">血细胞分析 - 脂血干扰Hgb校正</span>
+                <p class="calc-desc">临床意义：脂血标本会干扰Hgb测定，需校正后才能准确评估红细胞参数（MCH、MCHC）。</p>
+                <div class="input-row">
+                    <label>测定 Hgb</label>
+                    <input type="number" id="lip_hgb_total" placeholder="全血Hgb结果">
+                    <span class="unit">g/L</span>
+                </div>
+                <div class="input-row">
+                    <label>血浆 Hgb</label>
+                    <input type="number" id="lip_hgb_plasma" placeholder="血浆空白测定值">
+                    <span class="unit">g/L</span>
+                </div>
+                <div class="input-row">
+                    <label>Hct</label>
+                    <input type="number" id="lip_hct" placeholder="红细胞比积">
+                    <span class="unit">%</span>
+                </div>
+                <div class="input-row">
+                    <label>RBC</label>
+                    <input type="number" id="lip_rbc" placeholder="红细胞计数">
+                    <span class="unit">10¹²/L</span>
+                </div>
+                <button class="btn-calc" onclick="calcLipemia()">计算校正值</button>
+                <div class="result-box" id="lip_result">待计算...</div>
+                <div class="result-ref">参考范围：Hgb（男130-175g/L，女115-150g/L）；MCH 27-34pg；MCHC 320-360g/L</div>
+            </div>
+            <div class="calc-group">
+                <span class="calc-title">LDL-C 计算 (Friedewald公式)</span>
+                <p class="calc-desc">临床意义：评估心血管疾病风险的核心指标，LDL-C升高与动脉粥样硬化密切相关。（TG>4.5mmol/L时公式不准确）</p>
+                <div class="input-row">
+                    <label>TC 总胆</label>
+                    <input type="number" id="ldl_tc" placeholder="0">
+                    <select id="ldl_tc_unit">
+                        <option value="mmol/L">mmol/L</option>
+                        <option value="mg/dL">mg/dL</option>
+                    </select>
+                </div>
+                <div class="input-row">
+                    <label>HDL 高密</label>
+                    <input type="number" id="ldl_hdl" placeholder="0">
+                    <select id="ldl_hdl_unit">
+                        <option value="mmol/L">mmol/L</option>
+                        <option value="mg/dL">mg/dL</option>
+                    </select>
+                </div>
+                <div class="input-row">
+                    <label>TG 甘油</label>
+                    <input type="number" id="ldl_tg" placeholder="0">
+                    <select id="ldl_tg_unit">
+                        <option value="mmol/L">mmol/L</option>
+                        <option value="mg/dL">mg/dL</option>
+                    </select>
+                </div>
+                <button class="btn-calc" onclick="calcLDL()">计算 LDL</button>
+                <div class="result-box" id="ldl_result">待计算...</div>
+                <div class="result-ref">参考范围：<3.4mmol/L（正常）；3.4-4.1mmol/L（边缘升高）；≥4.1mmol/L（升高）</div>
+            </div>
+            <div class="calc-group">
+                <span class="calc-title">低蛋白血症校正钙 (Alb < 40g/L)</span>
+                <p class="calc-desc">临床意义：白蛋白降低时，实测钙会被低估，校正后才能反映真实血钙水平。</p>
+                <div class="input-row">
+                    <label>血钙 Ca</label>
+                    <input type="number" id="ca_val" placeholder="0">
+                    <select id="ca_unit">
+                        <option value="mmol/L">mmol/L</option>
+                        <option value="mg/dL">mg/dL</option>
+                    </select>
+                </div>
+                <div class="input-row">
+                    <label>白蛋白 Alb</label>
+                    <input type="number" id="alb_val" placeholder="0">
+                    <span class="unit">g/L</span>
+                </div>
+                <button class="btn-calc" onclick="calcCa()">计算校正钙</button>
+                <div class="result-box" id="ca_result">待计算...</div>
+                <div class="result-ref">参考范围：2.1-2.7mmol/L（离子钙1.1-1.3mmol/L）</div>
+            </div>
+            <div class="calc-group">
+                <span class="calc-title">BMI 体质指数</span>
+                <p class="calc-desc">临床意义：评估营养状态和肥胖程度，与糖尿病、心血管疾病等慢性疾病风险密切相关。</p>
+                <div class="input-row">
+                    <label>身高</label>
+                    <input type="number" id="bmi_h" placeholder="175">
+                    <select id="bmi_h_unit">
+                        <option value="cm">cm</option>
+                        <option value="m">m</option>
+                    </select>
+                </div>
+                <div class="input-row">
+                    <label>体重</label>
+                    <input type="number" id="bmi_w" placeholder="70">
+                    <span class="unit">kg</span>
+                </div>
+                <button class="btn-calc" onclick="calcBMI()">计算 BMI</button>
+                <div class="result-box" id="bmi_result">待计算...</div>
+                <div class="result-ref">参考范围：18.5-23.9（正常）；24-27.9（超重）；≥28（肥胖）</div>
+            </div>
+            <div class="calc-group">
+                <span class="calc-title">肾小球滤过率 eGFR (CKD-EPI 公式)</span>
+                <p class="calc-desc">临床意义：评估肾功能的核心指标，用于慢性肾病（CKD）分期和治疗决策。</p>
+                <div class="input-row">
+                    <label>血清肌酐</label>
+                    <input type="number" id="egfr_scr" placeholder="0.9" step="0.01">
+                    <select id="egfr_scr_unit">
+                        <option value="mg/dL">mg/dL</option>
+                        <option value="μmol/L">μmol/L</option>
+                    </select>
+                </div>
+                <div class="input-row">
+                    <label>年龄</label>
+                    <input type="number" id="egfr_age" placeholder="45" min="18" max="120">
+                    <span class="unit">岁</span>
+                </div>
+                <div class="input-row">
+                    <label>性别</label>
+                    <select id="egfr_gender">
+                        <option value="male">男性</option>
+                        <option value="female">女性</option>
+                    </select>
+                </div>
+                <div class="input-row">
+                    <label>种族</label>
+                    <select id="egfr_race">
+                        <option value="nonblack">非黑人</option>
+                        <option value="black">黑人</option>
+                    </select>
+                </div>
+                <button class="btn-calc" onclick="calcEGFR()">计算 eGFR</button>
+                <div class="result-box" id="egfr_result">待计算...</div>
+                <div class="result-ref">参考范围：≥90mL/min/1.73m²（正常）；60-89（轻度下降）；30-59（中度下降）；15-29（重度下降）；<15（肾衰竭）</div>
+            </div>
+            <div class="calc-group" style="margin-bottom:0">
+                <span class="calc-title">肌酐清除率 Ccr (Cockcroft-Gault 公式)</span>
+                <p class="calc-desc">临床意义：评估肾小球滤过功能，用于药物剂量调整（如化疗药、免疫抑制剂）。</p>
+                <div class="input-row">
+                    <label>血清肌酐</label>
+                    <input type="number" id="ccr_scr" placeholder="88.4" step="0.1">
+                    <select id="ccr_scr_unit">
+                        <option value="μmol/L">μmol/L</option>
+                        <option value="mg/dL">mg/dL</option>
+                    </select>
+                </div>
+                <div class="input-row">
+                    <label>年龄</label>
+                    <input type="number" id="ccr_age" placeholder="50" min="18" max="120">
+                    <span class="unit">岁</span>
+                </div>
+                <div class="input-row">
+                    <label>体重</label>
+                    <input type="number" id="ccr_weight" placeholder="65" min="30" max="150">
+                    <span class="unit">kg</span>
+                </div>
+                <div class="input-row">
+                    <label>性别</label>
+                    <select id="ccr_gender">
+                        <option value="male">男性</option>
+                        <option value="female">女性</option>
+                    </select>
+                </div>
+                <button class="btn-calc" onclick="calcCCR()">计算 Ccr</button>
+                <div class="result-box" id="ccr_result">待计算...</div>
+                <div class="result-ref">参考范围：80-120mL/min（成人）；<60mL/min提示肾功能下降</div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="contactModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">科室通讯录</span>
+                <button class="close-btn" onclick="closeModal()">×</button> <!-- 简化关闭逻辑，无需传参 -->
+            </div>
+            <div class="contact-list">
+                <div class="contact-item">
+                    <div class="contact-name">皮乐祥</div>
+                    <div class="contact-phone">13307337915</div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-name">张莉鑫</div>
+                    <div class="contact-phone">18073101666</div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-name">贺辉其</div>
+                    <div class="contact-phone">13974558982</div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-name">张婷</div>
+                    <div class="contact-phone">17752852816</div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-name">石欢欢</div>
+                    <div class="contact-phone">15173145511</div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-name">罗杰</div>
+                    <div class="contact-phone">18175161638</div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-name">袁媛</div>
+                    <div class="contact-phone">15084802913</div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-name">黎俊</div>
+                    <div class="contact-phone">15673960875</div>
+                </div>>
+                <div class="contact-item">
+                    <div class="contact-name">胡蓉</div>
+                    <div class="contact-phone">18374839402</div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-name">李晓阳</div>
+                    <div class="contact-phone">18229706665</div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-name">陈荣泰</div>
+                    <div class="contact-phone">13017187249</div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-name">黄昱昆</div>
+                    <div class="contact-phone">17397318265</div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-name">彭柳芝</div>
+                    <div class="contact-phone">18674800828</div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-name">沈湘云</div>
+                    <div class="contact-phone">15367878529</div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-name">段勇</div>
+                    <div class="contact-phone">13808497344</div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-name">黄思维</div>
+                    <div class="contact-phone">15575816941</div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-name">胡奇隆</div>
+                    <div class="contact-phone">15207483483</div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-name">陶艺凡</div>
+                    <div class="contact-phone">13407362056</div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-name">陈刘旭</div>
+                    <div class="contact-phone">13142200885</div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-name">田鑫</div>
+                    <div class="contact-phone">15274730820</div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-name">王海</div>
+                    <div class="contact-phone">18175161608</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="whiteCellModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">白细胞分类计数工具</span>
+                <button class="close-btn" onclick="closeModal()">×</button> <!-- 简化关闭逻辑，无需传参 -->
+            </div>
+            <p class="white-cell-desc">临床意义：用于手动计数各类白细胞数量并自动换算百分比，原幼细胞自动汇总原始粒细胞、早幼粒细胞、中性中幼/晚幼粒细胞计数结果。</p>
+            <table id="countTable">
+                <tr>
+                    <th>细胞名称</</th>
+                    <th>计数</</th>
+                    <th>结果%<span class="th-note">- 表示无需计算</span></</th> <!-- 表头添加注释 -->
+                    <th>参考区间%</</th>
+                </tr>
+                <tr>
+                    <td>原始粒细胞</td>
+                    <td>
+                        <button onclick="decreaseCount('primitiveGranulocyte')">-</button>
+                        <span id="primitiveGranulocyteCount">0</span>
+                        <button onclick="increaseCount('primitiveGranulocyte')">+</button>
+                    </td>
+                    <td id="primitiveGranulocyteResult">0.00</td>
+                    <td>0 - 1</td>
+                </tr>
+                <tr>
+                    <td>早幼粒细胞</td>
+                    <td>
+                        <button onclick="decreaseCount('promyelocyte')">-</button>
+                        <span id="promyelocyteCount">0</span>
+                        <button onclick="increaseCount('promyelocyte')">+</button>
+                    </td>
+                    <td id="promyelocyteResult">0.00</td>
+                    <td>0 - 5</td>
+                </tr>
+                <tr>
+                    <td>中性中幼</td>
+                    <td>
+                        <button onclick="decreaseCount('neutrophilicMyelocyte')">-</button>
+                        <span id="neutrophilicMyelocyteCount">0</span>
+                        <button onclick="increaseCount('neutrophilicMyelocyte')">+</button>
+                    </td>
+                    <td id="neutrophilicMyelocyteResult">0.00</td>
+                    <td>2 - 12</td>
+                </tr>
+                <tr>
+                    <td>中性晚幼</td>
+                    <td>
+                        <button onclick="decreaseCount('neutrophilicMetamyelocyte')">-</button>
+                        <span id="neutrophilicMetamyelocyteCount">0</span>
+                        <button onclick="increaseCount('neutrophilicMetamyelocyte')">+</button>
+                    </td>
+                    <td id="neutrophilicMetamyelocyteResult">0.00</td>
+                    <td>3 - 16</td>
+                </tr>
+                <tr>
+                    <td>原幼细胞</td>
+                    <td>
+                        <span id="blastCellCount">0</span>
+                    </td>
+                    <td id="blastCellResult">0.00</td>
+                    <td> - </td>
+                </tr>
+                <tr>
+                    <td>中性杆状</td>
+                    <td>
+                        <button onclick="decreaseCount('neutrophilicBand')">-</button>
+                        <span id="neutrophilicBandCount">0</span>
+                        <button onclick="increaseCount('neutrophilicBand')">+</button>
+                    </td>
+                    <td id="neutrophilicBandResult">0.00</td>
+                    <td>1 - 5</td>
+                </tr>
+                <tr>
+                    <td>中性分叶</td>
+                    <td>
+                        <button onclick="decreaseCount('neutrophilicSegmented')">-</button>
+                        <span id="neutrophilicSegmentedCount">0</span>
+                        <button onclick="increaseCount('neutrophilicSegmented')">+</button>
+                    </td>
+                    <td id="neutrophilicSegmentedResult">0.00</td>
+                    <td>50 - 70</td>
+                </tr>
+                <tr>
+                    <td>嗜酸细胞</td>
+                    <td>
+                        <button onclick="decreaseCount('eosinophil')">-</button>
+                        <span id="eosinophilCount">0</span>
+                        <button onclick="increaseCount('eosinophil')">+</button>
+                    </td>
+                    <td id="eosinophilResult">0.00</td>
+                    <td>0.5 - 5</td>
+                </tr>
+                <tr>
+                    <td>成熟淋巴</td>
+                    <td>
+                        <button onclick="decreaseCount('matureLymphocyte')">-</button>
+                        <span id="matureLymphocyteCount">0</span>
+                        <button onclick="increaseCount('matureLymphocyte')">+</button>
+                    </td>
+                    <td id="matureLymphocyteResult">0.00</td>
+                    <td>20 - 40</td>
+                </tr>
+                <tr>
+                    <td>嗜碱细胞</td>
+                    <td>
+                        <button onclick="decreaseCount('basophil')">-</button>
+                        <span id="basophilCount">0</span>
+                        <button onclick="increaseCount('basophil')">+</button>
+                    </td>
+                    <td id="basophilResult">0.00</td>
+                    <td>0 - 1</td>
+                </tr>
+                <tr>
+                    <td>成熟单核</td>
+                    <td>
+                        <button onclick="decreaseCount('matureMonocyte')">-</button>
+                        <span id="matureMonocyteCount">0</span>
+                        <button onclick="increaseCount('matureMonocyte')">+</button>
+                    </td>
+                    <td id="matureMonocyteResult">0.00</td>
+                    <td>3 - 8</td>
+                </tr>
+                <tr>
+                    <td>异型淋巴</td>
+                    <td>
+                        <button onclick="decreaseCount('atypicalLymphocyte')">-</button>
+                        <span id="atypicalLymphocyteCount">0</span>
+                        <button onclick="increaseCount('atypicalLymphocyte')">+</button>
+                    </td>
+                    <td id="atypicalLymphocyteResult">0.00</td>
+                    <td>0 - 2</td>
+                </tr>
+                <tr>
+                    <td>异常淋巴细胞</td>
+                    <td>
+                        <button onclick="decreaseCount('abnormalLymphocyte')">-</button>
+                        <span id="abnormalLymphocyteCount">0</span>
+                        <button onclick="increaseCount('abnormalLymphocyte')">+</button>
+                    </td>
+                    <td id="abnormalLymphocyteResult">0.00</td>
+                    <td>0 - 2</td>
+                </tr>
+                <tr>
+                    <td>浆细胞</td>
+                    <td>
+                        <button onclick="decreaseCount('plasmaCell')">-</button>
+                        <span id="plasmaCellCount">0</span>
+                        <button onclick="increaseCount('plasmaCell')">+</button>
+                    </td>
+                    <td id="plasmaCellResult">0.00</td>
+                    <td>0 - 1</td>
+                </tr>
+                <tr>
+                    <td>有核红细胞</td>
+                    <td>
+                        <button onclick="decreaseCount('nucleatedRedBloodCell')">-</button>
+                        <span id="nucleatedRedBloodCellCount">0</span>
+                        <button onclick="increaseCount('nucleatedRedBloodCell')">+</button>
+                    </td>
+                    <td> - </td>
+                    <td> - </td>
+                </tr>
+            </table>
+            <div style="text-align: right; margin-top: 15px;">
+                <span style="font-size: 0.9rem; color: var(--primary-dark); font-weight: 500; margin-right: 15px;">总计数：<span id="totalCount" style="color: red; font-size: 1rem;">0</span></span>
+                <button id="resetButton" onclick="resetAllNumbers()">重置所有数字</button>
+            </div>
+        </div>
+    </div>
+    <footer>
+        &copy; 泰和医院检验科 | 内部系统请在内网环境访问
+    </footer>
+    <script>
+        // 百度搜索功能
+        function searchBaidu() {
+            const searchInput = document.querySelector('.search-container input');
+            const keyword = searchInput.value.trim();
+            if (keyword) {
+                window.open(`https://www.baidu.com/s?wd=${encodeURIComponent(keyword)}`, '_blank');
+            }
+        }
+        // 弹窗控制（简化逻辑，自动识别当前弹窗）
+        function openModal(type = 'calc') {
+            const modalMap = {
+                calc: 'calcModal',
+                contact: 'contactModal',
+                whiteCell: 'whiteCellModal'
+            };
+            const modalId = modalMap[type];
+            if (modalId) {
+                document.getElementById(modalId).classList.add('active');
+            }
+        }
+        function closeModal() {
+            // 关闭所有已激活的弹窗
+            document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+                modal.classList.remove('active');
+            });
+        }
+        // 绑定遮罩层关闭事件
+        document.querySelectorAll('.modal-overlay').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) closeModal();
+            });
+        });
+        // 单位转换工具函数
+        function convertUnit(value, fromUnit, toUnit) {
+            if (fromUnit === toUnit) return value;
+            // 血脂单位转换：1 mmol/L = 38.67 mg/dL
+            if (fromUnit === 'mmol/L' && toUnit === 'mg/dL') return value * 38.67;
+            if (fromUnit === 'mg/dL' && toUnit === 'mmol/L') return value / 38.67;
+            // 肌酐单位转换：1 mg/dL = 88.4 μmol/L
+            if (fromUnit === 'mg/dL' && toUnit === 'μmol/L') return value * 88.4;
+            if (fromUnit === 'μmol/L' && toUnit === 'mg/dL') return value / 88.4;
+            // 身高单位转换：1 m = 100 cm
+            if (fromUnit === 'cm' && toUnit === 'm') return value / 100;
+            if (fromUnit === 'm' && toUnit === 'cm') return value * 100;
+            // 血钙单位转换：1 mmol/L = 4 mg/dL
+            if (fromUnit === 'mmol/L' && toUnit === 'mg/dL') return value * 4;
+            if (fromUnit === 'mg/dL' && toUnit === 'mmol/L') return value / 4;
+            return value;
+        }
+        // 脂血校正
+        function calcLipemia() {
+            let hgb_total = parseFloat(document.getElementById('lip_hgb_total').value);
+            let hgb_plasma = parseFloat(document.getElementById('lip_hgb_plasma').value);
+            let hct = parseFloat(document.getElementById('lip_hct').value);
+            let rbc = parseFloat(document.getElementById('lip_rbc').value);
+            let resBox = document.getElementById('lip_result');
+            if (isNaN(hgb_total) || isNaN(hgb_plasma) || isNaN(hct) || isNaN(rbc)) {
+                resBox.innerHTML = "❌ 请填写所有4项数值";
+                resBox.className = "result-box error";
+                return;
+            }
+            let hgb_corr = hgb_total - (hgb_plasma * (1 - (hct / 100)));
+            let mch_corr = (hgb_corr / rbc) * 10;
+            let mchc_corr = (hgb_corr / hct) * 100;
+            resBox.className = "result-box";
+            resBox.innerHTML =
+                `校正 Hgb: ${hgb_corr.toFixed(1)} g/L\n` +
+                `校正 MCH: ${mch_corr.toFixed(1)} pg\n` +
+                `校正 MCHC: ${mchc_corr.toFixed(0)} g/L`;
+        }
+        // LDL 计算
+        function calcLDL() {
+            let tc = parseFloat(document.getElementById('ldl_tc').value);
+            let hdl = parseFloat(document.getElementById('ldl_hdl').value);
+            let tg = parseFloat(document.getElementById('ldl_tg').value);
+            let tcUnit = document.getElementById('ldl_tc_unit').value;
+            let hdlUnit = document.getElementById('ldl_hdl_unit').value;
+            let tgUnit = document.getElementById('ldl_tg_unit').value;
+            let resBox = document.getElementById('ldl_result');
+            if (isNaN(tc) || isNaN(hdl) || isNaN(tg)) {
+                resBox.innerText = "❌ 请输入完整数值";
+                resBox.className = "result-box error"; // 统一错误样式
+                return;
+            }
+            tc = convertUnit(tc, tcUnit, 'mmol/L');
+            hdl = convertUnit(hdl, hdlUnit, 'mmol/L');
+            tg = convertUnit(tg, tgUnit, 'mmol/L');
+            let ldl = tc - hdl - (tg / 2.2);
+            resBox.className = "result-box";
+            resBox.innerText = `LDL-C ≈ ${ldl.toFixed(2)} mmol/L`;
+        }
+        // 校正钙
+        function calcCa() {
+            let ca = parseFloat(document.getElementById('ca_val').value);
+            let alb = parseFloat(document.getElementById('alb_val').value);
+            let caUnit = document.getElementById('ca_unit').value;
+            let resBox = document.getElementById('ca_result');
+            if (isNaN(ca) || isNaN(alb)) {
+                resBox.innerText = "❌ 请输入完整数值";
+                resBox.className = "result-box error"; // 统一错误样式
+                return;
+            }
+            ca = convertUnit(ca, caUnit, 'mmol/L');
+            let correctedCa = ca + 0.02 * (40 - alb);
+            resBox.className = "result-box";
+            resBox.innerText = `校正钙 = ${correctedCa.toFixed(2)} mmol/L`;
+        }
+        // BMI
+        function calcBMI() {
+            let h = parseFloat(document.getElementById('bmi_h').value);
+            let w = parseFloat(document.getElementById('bmi_w').value);
+            let hUnit = document.getElementById('bmi_h_unit').value;
+            let resBox = document.getElementById('bmi_result');
+            if (isNaN(h) || isNaN(w)) {
+                resBox.innerText = "❌ 请输入完整数值";
+                resBox.className = "result-box error"; // 统一错误样式
+                return;
+            }
+            h = convertUnit(h, hUnit, 'm');
+            let bmi = w / (h * h);
+            resBox.className = "result-box";
+            resBox.innerText = `BMI = ${bmi.toFixed(1)}`;
+        }
+        // eGFR
+        function calcEGFR() {
+            let scr = parseFloat(document.getElementById('egfr_scr').value);
+            let age = parseFloat(document.getElementById('egfr_age').value);
+            let gender = document.getElementById('egfr_gender').value;
+            let race = document.getElementById('egfr_race').value;
+            let scrUnit = document.getElementById('egfr_scr_unit').value;
+            let resBox = document.getElementById('egfr_result');
+            if (isNaN(scr) || isNaN(age) || age < 18) {
+                resBox.innerHTML = "❌ 请填写有效数值(年龄≥18岁)";
+                resBox.className = "result-box error";
+                return;
+            }
+            scr = convertUnit(scr, scrUnit, 'mg/dL');
+            let k, a;
+            if (gender === "male") {
+                k = 0.9;
+                a = -0.411;
+            } else {
+                k = 0.7;
+                a = -0.329;
+            }
+            let term = scr / k;
+            let egfr = 141 * Math.min(term, 1) ** a * Math.max(term, 1) ** (-1.209) * 0.993 ** age;
+            if (race === "black") egfr *= 1.159;
+            resBox.className = "result-box";
+            resBox.innerHTML = `eGFR ≈ ${egfr.toFixed(1)} mL/min/1.73m²`;
+        }
+        // Ccr
+        function calcCCR() {
+            let scr = parseFloat(document.getElementById('ccr_scr').value);
+            let age = parseFloat(document.getElementById('ccr_age').value);
+            let weight = parseFloat(document.getElementById('ccr_weight').value);
+            let gender = document.getElementById('ccr_gender').value;
+            let scrUnit = document.getElementById('ccr_scr_unit').value;
+            let resBox = document.getElementById('ccr_result');
+            if (isNaN(scr) || isNaN(age) || isNaN(weight) || age < 18) {
+                resBox.innerHTML = "❌ 请填写有效数值(年龄≥18岁)";
+                resBox.className = "result-box error";
+                return;
+            }
+            scr = convertUnit(scr, scrUnit, 'mg/dL');
+            let ccr;
+            if (gender === "male") {
+                ccr = ((140 - age) * weight) / (72 * scr);
+            } else {
+                ccr = ((140 - age) * weight) / (72 * scr) * 0.85;
+            }
+            resBox.className = "result-box";
+            resBox.innerHTML = `Ccr ≈ ${ccr.toFixed(1)} mL/min`;
+        }
+        // 白细胞分类计数相关函数
+        function increaseCount(cellType) {
+            const countElement = document.getElementById(`${cellType}Count`);
+            let count = parseInt(countElement.textContent);
+            count++;
+            countElement.textContent = count;
+            updateWhiteCellResults();
+        }
+        function decreaseCount(cellType) {
+            const countElement = document.getElementById(`${cellType}Count`);
+            let count = parseInt(countElement.textContent);
+            if (count > 0) {
+                count--;
+                countElement.textContent = count;
+                updateWhiteCellResults();
+            }
+        }
+        function updateWhiteCellResults() {
+            const rows = document.querySelectorAll('#countTable tr:not(:first-child)');
+            let total = 0;
+            let blastCellTotal = 0;
+            // 计算原幼细胞的数量
+            const primitiveGranulocyteCount = parseInt(document.getElementById('primitiveGranulocyteCount').textContent);
+            const promyelocyteCount = parseInt(document.getElementById('promyelocyteCount').textContent);
+            const neutrophilicMyelocyteCount = parseInt(document.getElementById('neutrophilicMyelocyteCount').textContent);
+            const neutrophilicMetamyelocyteCount = parseInt(document.getElementById('neutrophilicMetamyelocyteCount').textContent);
+            blastCellTotal = primitiveGranulocyteCount + promyelocyteCount + neutrophilicMyelocyteCount + neutrophilicMetamyelocyteCount;
+            document.getElementById('blastCellCount').textContent = blastCellTotal;
+            // 计算总计数，排除原幼细胞和有核红细胞
+            rows.forEach(row => {
+                const cellName = row.cells[0].textContent;
+                if (cellName!== '原幼细胞' && cellName!== '有核红细胞') {
+                    const countElement = row.querySelector('span');
+                    if (countElement) {
+                        const count = parseInt(countElement.textContent);
+                        total += count;
+                    }
+                }
+            });
+            document.getElementById('totalCount').textContent = total;
+            // 更新各项结果百分比
+            rows.forEach(row => {
+                const cellName = row.cells[0].textContent;
+                const countElement = row.querySelector('span');
+                if (countElement) {
+                    const count = parseInt(countElement.textContent);
+                    const resultElement = row.cells[2];
+                    const result = total > 0? (count / total * 100).toFixed(2) : 0;
+                    resultElement.textContent = result;
+                }
+            });
+        }
+        function resetAllNumbers() {
+            const countElements = document.querySelectorAll('#countTable span[id$="Count"]');
+            countElements.forEach(element => {
+                element.textContent = '0';
+            });
+            document.getElementById('totalCount').textContent = '0';
+            updateWhiteCellResults();
+        }
+    </script>
+</body>
 </html>
